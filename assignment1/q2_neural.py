@@ -35,13 +35,23 @@ def forward_backward_prop(data, labels, params, dimensions):
     ofs += H * Dy
     b2 = np.reshape(params[ofs:ofs + Dy], (1, Dy))
 
-    ### YOUR CODE HERE: forward propagation
-    raise NotImplementedError
-    ### END YOUR CODE
+    z1 = np.dot(data, W1) + b1
+    a1 = sigmoid(z1)
+    scores = np.dot(a1, W2) + b2
 
-    ### YOUR CODE HERE: backward propagation
-    raise NotImplementedError
-    ### END YOUR CODE
+    sm = softmax(scores)
+    correct_labels = np.sum(sm * labels, axis=1)
+    correct_labels = - np.log(correct_labels)
+    cost = np.sum(correct_labels)
+
+    dscores = sm - labels
+    gradW2 = np.dot(a1.T, dscores)
+    gradb2 = np.sum(dscores, axis=0)
+    grada1 = np.dot(dscores, W2.T)
+
+    gradz1 = grada1 * sigmoid_grad(a1)
+    gradW1 = np.dot(data.T, gradz1)
+    gradb1 = np.sum(gradz1, axis=0)
 
     ### Stack gradients (do not modify)
     grad = np.concatenate((gradW1.flatten(), gradb1.flatten(),
@@ -78,10 +88,6 @@ def your_sanity_checks():
     This function will not be called by the autograder, nor will
     your additional tests be graded.
     """
-    print "Running your sanity checks..."
-    ### YOUR CODE HERE
-    raise NotImplementedError
-    ### END YOUR CODE
 
 
 if __name__ == "__main__":
