@@ -14,9 +14,7 @@ def normalizeRows(x):
     unit length.
     """
 
-    ### YOUR CODE HERE
-    raise NotImplementedError
-    ### END YOUR CODE
+    x /= np.sqrt(np.sum(x*x, axis=1, keepdims=True))
 
     return x
 
@@ -57,9 +55,13 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     assignment!
     """
 
-    ### YOUR CODE HERE
-    raise NotImplementedError
-    ### END YOUR CODE
+    yhat = softmax(outputVectors.dot(predicted))
+    cost = - np.log(yhat[target])
+
+    gradScores = yhat.reshape(-1, 1)
+    gradScores[target] -= 1
+    gradPred = outputVectors.T.dot(gradScores).flatten()
+    grad = gradScores.dot(predicted.reshape(1, -1))
 
     return cost, gradPred, grad
 
@@ -130,9 +132,16 @@ def skipgram(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     gradIn = np.zeros(inputVectors.shape)
     gradOut = np.zeros(outputVectors.shape)
 
-    ### YOUR CODE HERE
-    raise NotImplementedError
-    ### END YOUR CODE
+    currWordIndex = tokens[currentWord]
+    predicted = inputVectors[currWordIndex, :]
+
+    for contextWord in contextWords:
+        target = tokens[contextWord]
+        sample_cost, gradPred, grad = word2vecCostAndGradient(predicted, target, outputVectors, dataset)
+
+        cost += sample_cost
+        gradIn[currWordIndex, :] += gradPred
+        gradOut += grad
 
     return cost, gradIn, gradOut
 
