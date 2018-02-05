@@ -55,13 +55,15 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     assignment!
     """
 
-    yhat = softmax(outputVectors.dot(predicted))
-    cost = - np.log(yhat[target])
+    scores = outputVectors.dot(predicted)
+    wordProbs = softmax(scores)
+    cost = - np.log(wordProbs[target])
 
-    gradScores = yhat.reshape(-1, 1)
+    gradScores = wordProbs
     gradScores[target] -= 1
-    gradPred = outputVectors.T.dot(gradScores).flatten()
-    grad = gradScores.dot(predicted.reshape(1, -1))
+
+    gradPred = gradScores.dot(outputVectors)
+    grad = np.outer(gradScores, predicted)
 
     return cost, gradPred, grad
 
@@ -97,9 +99,17 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     indices = [target]
     indices.extend(getNegativeSamples(target, dataset, K))
 
-    ### YOUR CODE HERE
-    raise NotImplementedError
-    ### END YOUR CODE
+    scores = outputVectors.dot(predicted)
+    sigPos = sigmoid(scores[target])
+    sigNeg = sigmoid(-scores[indices[1:]])
+
+    cost = - np.log(sigPos) - np.sum(np.log(sigNeg))
+    gradPred = (sigPos - 1) * outputVectors[target, :] - \
+               np.sum(((sigNeg - 1).reshape(-1, 1) * outputVectors[indices[1:], :]), axis=0)
+
+    grad = np.zeros(outputVectors.shape)
+    grad[target] = (sigPos - 1) * predicted
+    np.subtract.at(grad, indices[1:], np.outer((sigNeg - 1), predicted))
 
     return cost, gradPred, grad
 
@@ -132,15 +142,15 @@ def skipgram(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     gradIn = np.zeros(inputVectors.shape)
     gradOut = np.zeros(outputVectors.shape)
 
-    currWordIndex = tokens[currentWord]
-    predicted = inputVectors[currWordIndex, :]
+    currWordIdx = tokens[currentWord]
+    currWordVec = inputVectors[currWordIdx, :]
 
     for contextWord in contextWords:
-        target = tokens[contextWord]
-        sample_cost, gradPred, grad = word2vecCostAndGradient(predicted, target, outputVectors, dataset)
+        contextWordIdx = tokens[contextWord]
+        sampleCost, gradPred, grad = word2vecCostAndGradient(currWordVec, contextWordIdx, outputVectors, dataset)
 
-        cost += sample_cost
-        gradIn[currWordIndex, :] += gradPred
+        cost += sampleCost
+        gradIn[currWordIdx, :] += gradPred
         gradOut += grad
 
     return cost, gradIn, gradOut
@@ -163,9 +173,14 @@ def cbow(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     gradIn = np.zeros(inputVectors.shape)
     gradOut = np.zeros(outputVectors.shape)
 
-    ### YOUR CODE HERE
-    raise NotImplementedError
-    ### END YOUR CODE
+    currWordIdx = tokens[currentWord]
+    contextWordIdxs = [tokens[contextWord] for contextWord in contextWords]
+
+    vhat = np.sum(inputVectors[contextWordIdxs], axis=0)
+    cost, gradPred, grad = word2vecCostAndGradient(vhat, currWordIdx, outputVectors, dataset)
+
+    np.add.at(gradIn, contextWordIdxs, gradPred)
+    gradOut += grad
 
     return cost, gradIn, gradOut
 
