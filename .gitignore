@@ -1,5 +1,6 @@
 
 *.pyc
+*.pkl
 *.swp
 
 __pycache__

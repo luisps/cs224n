@@ -20,8 +20,9 @@ class PartialParse(object):
         # The sentence being parsed is kept for bookkeeping purposes. Do not use it in your code.
         self.sentence = sentence
 
-        ### YOUR CODE HERE
-        ### END YOUR CODE
+        self.stack = ['ROOT']
+        self.buffer = list(sentence)
+        self.dependencies = []
 
     def parse_step(self, transition):
         """Performs a single parse step by applying the given transition to this partial parse
@@ -31,8 +32,14 @@ class PartialParse(object):
                         and right-arc transitions. You can assume the provided transition is a legal
                         transition.
         """
-        ### YOUR CODE HERE
-        ### END YOUR CODE
+        if transition == 'S':
+            self.stack.append(self.buffer.pop(0))
+        elif transition == 'LA':
+            head, dependent = self.stack[-1], self.stack.pop(-2)
+            self.dependencies.append((head, dependent))
+        elif transition == 'RA':
+            head, dependent = self.stack[-2], self.stack.pop(-1)
+            self.dependencies.append((head, dependent))
 
     def parse(self, transitions):
         """Applies the provided transitions to this PartialParse
@@ -65,8 +72,24 @@ def minibatch_parse(sentences, model, batch_size):
                       contain the parse for sentences[i]).
     """
 
-    ### YOUR CODE HERE
-    ### END YOUR CODE
+    partial_parses = [PartialParse(sentence) for sentence in sentences]
+    unfinished_parses = list(partial_parses)
+
+    while unfinished_parses:
+        minibatch_parses = unfinished_parses[:batch_size]
+        transitions = model.predict(minibatch_parses)
+
+        finished_parses_idxs = []
+        for idx, partial_parse in enumerate(minibatch_parses):
+            partial_parse.parse_step(transitions[idx])
+
+            if not partial_parse.buffer and len(partial_parse.stack) == 1:
+                finished_parses_idxs.append(idx)
+
+        for idx in reversed(finished_parses_idxs):
+            del unfinished_parses[idx]
+
+    dependencies = [parse.dependencies for parse in partial_parses]
 
     return dependencies
 
