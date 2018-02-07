@@ -23,8 +23,9 @@ def softmax(x):
                   tensor in this problem.
     """
 
-    ### YOUR CODE HERE
-    ### END YOUR CODE
+    x -= tf.reduce_max(x, axis=1, keepdims=True)
+    out = tf.exp(x)
+    out /= tf.reduce_sum(out, axis=1, keepdims=True)
 
     return out
 
@@ -53,8 +54,9 @@ def cross_entropy_loss(y, yhat):
                     tensor in the problem.
     """
 
-    ### YOUR CODE HERE
-    ### END YOUR CODE
+    y = tf.to_float(y)
+    sample_cost = tf.reduce_sum(y*yhat, axis=1)
+    out = tf.reduce_sum(-tf.log(sample_cost))
 
     return out
 
