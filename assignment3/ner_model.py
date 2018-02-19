@@ -109,9 +109,8 @@ class NERModel(Model):
                         # Note that get_minibatches could either return a list, or a list of list
                         # [features, labels]. This makes expanding tuples into arguments (* operator) handy
 
-            ### YOUR CODE HERE (2-3 lines)
-
-            ### END YOUR CODE
+            for inputs_minibatch, labels_minibatch in minibatches(train_examples, self.config.batch_size):
+                self.train_on_batch(sess, inputs_minibatch, labels_minibatch)
 
             logger.info("Evaluating on development data")
             token_cm, entity_scores = self.evaluate(sess, dev_set, dev_set_raw)
