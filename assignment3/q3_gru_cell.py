@@ -64,9 +64,29 @@ class GRUCell(tf.nn.rnn_cell.RNNCell):
         # It's always a good idea to scope variables in functions lest they
         # be defined elsewhere!
         with tf.variable_scope(scope):
-            ### YOUR CODE HERE (~20-30 lines)
-            pass
-            ### END YOUR CODE ###
+            W_z = tf.get_variable('W_z', (self.input_size, self.state_size),
+                                  tf.float32, tf.contrib.layers.xavier_initializer())
+            U_z = tf.get_variable('U_z', (self.state_size, self.state_size),
+                                  tf.float32, tf.contrib.layers.xavier_initializer())
+            b_z = tf.get_variable('b_z', (self.state_size,), tf.float32, tf.zeros_initializer())
+
+            W_r = tf.get_variable('W_r', (self.input_size, self.state_size),
+                                  tf.float32, tf.contrib.layers.xavier_initializer())
+            U_r = tf.get_variable('U_r', (self.state_size, self.state_size),
+                                  tf.float32, tf.contrib.layers.xavier_initializer())
+            b_r = tf.get_variable('b_r', (self.state_size,), tf.float32, tf.zeros_initializer())
+
+            W_o = tf.get_variable('W_o', (self.input_size, self.state_size),
+                                  tf.float32, tf.contrib.layers.xavier_initializer())
+            U_o = tf.get_variable('U_o', (self.state_size, self.state_size),
+                                  tf.float32, tf.contrib.layers.xavier_initializer())
+            b_o = tf.get_variable('b_o', (self.state_size,), tf.float32, tf.zeros_initializer())
+
+            z_t = tf.nn.sigmoid(tf.matmul(inputs, W_z) + tf.matmul(state, U_z) + b_z)
+            r_t = tf.nn.sigmoid(tf.matmul(inputs, W_r) + tf.matmul(state, U_r) + b_r)
+            o_t = tf.nn.tanh(tf.matmul(inputs, W_o) + r_t * tf.matmul(state, U_o) + b_o)
+            new_state = z_t * state + (1 - z_t) * o_t
+
         # For a GRU, the output and state are the same (N.B. this isn't true
         # for an LSTM, though we aren't using one of those in our
         # assignment)
